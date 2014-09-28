@@ -5,7 +5,7 @@ import Data.Array.ST
 import Control.Monad
 import Control.Monad.ST
 import Data.STRef
- 
+
 -- | Randomly shuffle a list without the IO Monad
 --   /O(N)/
 shuffle :: [a] -> StdGen -> ([a],StdGen)

@@ -38,7 +38,7 @@ main = do
     setWindowSizeCallback w $ Just (\_ width height -> resize (width, height))
 
     resize (420,620)
-    
+
     done <- newIORef False
 
     let loop wire s = do
@@ -48,7 +48,7 @@ main = do
             Just now <- getTime
 
             clearColor $= Color4 0 0 0 1
-            
+
             either (const $ writeIORef done True) (\gs -> do
                 clear [ColorBuffer, DepthBuffer]
 
@@ -57,7 +57,7 @@ main = do
                 runRender $ renderGame gs
 
                 flush
-                
+
                 swapBuffers w
 
                 ) mgs
@@ -71,7 +71,7 @@ main = do
             M.unless (esc || d) $ do
                 M.when (frameLeft > 0) $
                     threadDelay (truncate $ 1000000 * frameLeft)
-                
+
                 loop wire' s'
 
     finally (loop (processInput w inputWire >>> gameLogic (newGame g)) clockSession_) (quit w)
@@ -86,4 +86,3 @@ resize (w, h) = do
 quit w = do
     destroyWindow w
     terminate
-

@@ -1,5 +1,5 @@
 module Render where
-    
+
 import Logic
 
 import Graphics.DrawingCombinators as D hiding (point)
@@ -38,7 +38,7 @@ renderGame gs = do
     censor (tint $ Color 1.0 1.0 1.0 0.5) $ renderBoard . view tetBoard $ doQuickFall gs
 
     tell $ tint (Color 0.1 0.1 0.1 1.0) $ convexPoly [(0,0),(300,0),(300,600),(0,600)]
-    
+
     tell $ translate (350 , 30) %% scale 10 (-10) %% translate (-0.5*holdWidth,0) %% text font "hold"
     case (view held gs) of
         Just t -> censor (((translate (350, 70)) %%) . ((scale 20 20) %%)) $ renderTetromino t
@@ -49,11 +49,11 @@ renderGame gs = do
     forM_ nexts $ \(t, n) -> censor (((translate (350, 110+60*n)) %%) . ((scale 20 20) %%)) $ renderTetromino t
 
 renderBoard :: Board -> Render ()
-renderBoard (Board rows) = forM_ (zip [0..] $ V.toList rows) $ \(n, row) -> 
+renderBoard (Board rows) = forM_ (zip [0..] $ V.toList rows) $ \(n, row) ->
     censor ((translate (0, 30*n + 15)) %%) $ renderRow row
 
 renderRow :: Row -> Render ()
-renderRow (Row cells) = forM_ (zip [0..] $ V.toList cells) $ \(n, cell) -> 
+renderRow (Row cells) = forM_ (zip [0..] $ V.toList cells) $ \(n, cell) ->
     censor ((translate (30*n + 15, 0)) %%) $ renderCell cell
 
 renderCell :: Cell -> Render ()

@@ -66,11 +66,11 @@ iPos _ = (3,0,0)
 randomBag :: StdGen -> ([Tetromino], StdGen)
 randomBag g = shuffle [I,O,J,L,Z,S,T] g
 
-newGame :: StdGen -> Gamestate 
+newGame :: StdGen -> Gamestate
 newGame g = let
     (iBag, g') = randomBag g
     first = head iBag
-  in 
+  in
     Gamestate emptyBoard (inBoard first $ iPos first) first (iPos first) (tail iBag) g' (dropTime 1) Nothing False 0 1
 
 checkRows :: Gamestate -> Gamestate
@@ -85,7 +85,7 @@ tetPos = lens ((,) <$> view tet <*> view pos) (\gs (t,p) -> gs & (tetBoard .~ (i
 doHold :: Gamestate -> Gamestate
 doHold gs
     | view haveHeld gs = gs
-    | otherwise = let 
+    | otherwise = let
         gs' = fillOutBag gs & (held .~ (Just $ gs ^. tet))
                             . (haveHeld .~ True)
                             . (timeLeft .~ dropTime (gs ^. level))
@@ -94,17 +94,17 @@ doHold gs
             Nothing -> let n = head $ gs' ^. bag
               in gs' & (tetPos .~ (n, iPos n))
                      . (over bag tail)
-            
+
 fillOutBag :: Gamestate -> Gamestate
 fillOutBag gs =
   let
     (newBag, g) = if 4 >= (length $ view bag gs) then randomBag (view gen gs) else ([], view gen gs)
     bag' = (view bag gs) ++ newBag
-  in 
+  in
     set bag bag' . set gen g $ gs
 
 doDrop :: Gamestate -> (Gamestate, Bool)
-doDrop gs = 
+doDrop gs =
   let
     mDrop = moveDown (view tetBoard gs) (view board gs)
     posMove = \(x,y,r) -> (x,y+1,r)
@@ -115,14 +115,14 @@ doDrop gs =
                            . (bag .~ tail bag')
                            . (timeLeft .~ dropTime (gs ^. level))
                            . (haveHeld .~ False))
-  in 
+  in
     maybe (nextGs, False) (\d -> (over pos posMove . set tetBoard d $ gs, True)) mDrop
 
 doQuickFall :: Gamestate -> Gamestate
 doQuickFall gs = let (dgs, dropped) = doDrop gs in if dropped then doQuickFall dgs else gs
 
 doMove :: Moving -> Gamestate -> Gamestate
-doMove m gs = 
+doMove m gs =
   let
     mMove = move m (view tetBoard gs) (view board gs)
     posMove = case m of
@@ -132,7 +132,7 @@ doMove m gs =
     maybe gs (\d -> over pos posMove . set tetBoard d $ gs) mMove
 
 doRotate :: Rotating -> Gamestate -> Gamestate
-doRotate rd gs = 
+doRotate rd gs =
   let
     (x,y,r) = view pos gs
     r' = (`mod` 4) $ r + case rd of
@@ -144,10 +144,10 @@ doRotate rd gs =
     mRotate = if c - 4 == filledCount b then Just rotated else Nothing
   in
     maybe gs (\d -> set pos (x,y,r') . set tetBoard d $ gs) mRotate
-    
+
 gameLogic :: Gamestate -> Logic InputData Gamestate
 gameLogic gs = switch (go gs)
-  where 
+  where
     go gs = proc inputData -> do
         slowDropping <- arr inputdataSlowFall -< inputData
         let dropT = if slowDropping then 0.05 else dropTime $ gs ^. level
@@ -158,7 +158,7 @@ gameLogic gs = switch (go gs)
         re <- rotateEvent -< inputData
         rotateE <- delay NoEvent -< fmap (\r -> gameLogic (doRotate r (set timeLeft tl gs))) re
         qfe <- quickFallEvent -< inputData
-        quickFallE <- delay NoEvent -< fmap (const (gameLogic (set timeLeft dropT . doQuickFall $ gs))) qfe 
+        quickFallE <- delay NoEvent -< fmap (const (gameLogic (set timeLeft dropT . doQuickFall $ gs))) qfe
         he <- holdEvent -< inputData
         holdE <- delay NoEvent -< fmap (const (gameLogic (doHold gs))) he
         returnA -< (gs, foldl mergeL NoEvent [holdE, quickFallE, rotateE, moveE, dropE])
@@ -185,10 +185,10 @@ filledCount :: Board -> Int
 filledCount (Board rows) = sum . map (V.length . V.filter isFilled . rowCells) . V.toList $ rows
 
 flatten :: Board -> Board -> Board
-flatten a b = 
-      Board . V.fromList 
+flatten a b =
+      Board . V.fromList
     . map (Row . V.fromList)
-    $ zipWith (zipWith (\x y -> case (x,y) of 
+    $ zipWith (zipWith (\x y -> case (x,y) of
           (Filled t,_) -> Filled t
           (_,Filled t) -> Filled t
           _ -> Empty)) (ll a) (ll b)
@@ -196,7 +196,7 @@ flatten a b =
     ll = V.toList . fmap (V.toList . rowCells) . boardRows
 
 moveDown :: Grid -> Board -> Maybe Grid
-moveDown t@(Board tRows) b = 
+moveDown t@(Board tRows) b =
   let
     movedDown = Board $ (V.singleton emptyRow) V.++ (V.init tRows)
     c = filledCount $ flatten movedDown b
@@ -204,7 +204,7 @@ moveDown t@(Board tRows) b =
     if c - 4 == filledCount b then Just movedDown else Nothing
 
 move :: Moving -> Grid -> Board -> Maybe Grid
-move m t@(Board tRows) b = 
+move m t@(Board tRows) b =
   let
     moved = Board $ flip V.map tRows $ case m of
         ML -> \(Row r) -> Row $ V.tail r V.++ V.singleton Empty
@@ -215,16 +215,16 @@ move m t@(Board tRows) b =
 
 inBoard :: Tetromino -> (Int, Int, Int) -> Board
 inBoard t (x,y,r) = Board rows
-  where 
+  where
     (Board grid) = (!! r) . iterate rotateGridCW . tetrominoGrid $ t
-    gridRows = fmap (\(Row cs) -> Row $ V.take 10 $ mconcat 
+    gridRows = fmap (\(Row cs) -> Row $ V.take 10 $ mconcat
         [V.replicate x Empty, cs, V.replicate 10 Empty]) $ grid
     preRows = V.replicate y emptyRow
     postRows = V.replicate 20 emptyRow
     rows = V.take 20 $ mconcat $ [preRows, gridRows, postRows]
-    
+
 tetrominoGrid :: Tetromino -> Board
-tetrominoGrid I = Board $ V.fromList 
+tetrominoGrid I = Board $ V.fromList
     [ Row $ V.replicate 4 Empty
     , Row $ V.replicate 4 $ Filled I
     , Row $ V.replicate 4 Empty

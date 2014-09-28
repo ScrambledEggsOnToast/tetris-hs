@@ -33,7 +33,7 @@ inputWire :: Input InputData
 inputWire = InputData <$> movingWire <*> rotatingWire <*> quickFallWire <*> slowFallWire <*> holdWire
 
 movingWire :: Input (Event (Maybe Moving))
-movingWire =  
+movingWire =
   let io = mkGen_ $ \_ -> do
         w <- ask
         left <- liftIO $ getKey w Key'Left
@@ -46,7 +46,7 @@ movingWire =
     mm <- io -< ()
     dmm <- delay Nothing <<< io -< ()
     let emm = if dmm /= mm then Event mm else NoEvent
-    returnA -< emm) 
+    returnA -< emm)
 
 slowFallWire :: Input Bool
 slowFallWire = mkGen_ $ \_ -> do
@@ -57,7 +57,7 @@ slowFallWire = mkGen_ $ \_ -> do
         _ -> True
 
 quickFallWire :: Input (Event ())
-quickFallWire = 
+quickFallWire =
   let io = mkGen_ $ \_ -> do
         w <- ask
         d <- liftIO $ getKey w Key'Space
@@ -71,7 +71,7 @@ quickFallWire =
     returnA -< emf
 
 holdWire :: Input (Event ())
-holdWire = 
+holdWire =
   let io = mkGen_ $ \_ -> do
         w <- ask
         l <- liftIO $ getKey w Key'LeftShift
@@ -87,7 +87,7 @@ holdWire =
     returnA -< emf
 
 rotatingWire :: Input (Event (Maybe Rotating))
-rotatingWire = 
+rotatingWire =
   let io = mkGen_ $ \_ -> do
         w <- ask
         cw <- liftIO $ getKey w Key'Up
